@@ -94,42 +94,30 @@ def run_trae():
 
 # ================= 2. WorkBuddy =================
 def run_workbuddy():
-    rc, out = run_cmd(["python3", str(BASE / "workbuddy_checkin.py"), "--no-notify"])
+    # WorkBuddy 为可选组件：配套脚本 wb_checkin.py（见 workbuddy-checkin-skill 仓库）存在才执行
+    wb_script = BASE / "wb_checkin.py"
+    if not wb_script.exists():
+        print("[WorkBuddy] wb_checkin.py 不存在，跳过（可选组件）")
+        return {"ok": True, "skipped": True, "action": "", "got": 0, "travel_got": 0,
+                "balance": None, "streak": None, "week_days": None, "travel": ""}
+    rc, out = run_cmd(["python3", str(wb_script)])
     (LOG_DIR / "workbuddy.log").open("a").write(f"[{datetime.now():%F %T}] rc={rc}\n{out}\n")
     if rc != 0:
         return {"ok": False, "err": out[-300:]}
     j = extract_json(out) or {}
     if j.get("status") != "ok":
         return {"ok": False, "err": (j.get("msg") or out)[-300:]}
-    # 深挖明细
-    data = {}
-    try:
-        data = j.get("detail", {}).get("status_resp", {}).get("data", {}) or {}
-    except Exception:
-        pass
-    msg = j.get("msg", "")
-    # 猫猫旅行段落："... ｜ 派猫猫旅行：xxx"
-    travel = ""
-    if "派猫猫旅行：" in msg:
-        travel = msg.split("派猫猫旅行：", 1)[1].strip()
-    # 旅行收益 "+N 积分"
-    m = re.search(r"已领取旅行奖励\s*\+(\d+)\s*积分", msg)
-    travel_got = int(m.group(1)) if m else 0
-    # 余额修正：脚本的 balance 是签到【前】的快照（来自签到前 status 查询），
-    # 签到成功后应为 快照 + daily_credit。注意 total_credits 语义是
-    # "Buddy 加油站本季活动累计"（按季重置），不是账户总余额。
-    balance = j.get("balance")
-    if balance is not None and j.get("action") == "clicked":
-        balance = (balance or 0) + (data.get("daily_credit") or 100)
+    tr = j.get("travel") or {}
+    # balance 语义：Buddy 加油站本季活动累计（按季重置），脚本已在签到后修正快照
     return {
         "ok": True,
         "action": j.get("action", ""),
         "got": j.get("points", 0) or 0,
-        "travel_got": travel_got,
-        "balance": balance,
-        "streak": data.get("streak_days"),
-        "week_days": data.get("week_checkin_days"),
-        "travel": travel,
+        "travel_got": tr.get("claimed", 0) or 0,
+        "balance": j.get("balance"),
+        "streak": j.get("streak_days"),
+        "week_days": j.get("week_checkin_days"),
+        "travel": tr.get("desc", ""),
     }
 
 
@@ -250,7 +238,7 @@ def main():
             lines.append(f"▪️ TRAE：**+{trae_got}**")
         else:
             lines.append(f"▪️ TRAE：今日已签（此前已领取）")
-    if wb["ok"]:
+    if wb["ok"] and not wb.get("skipped"):
         streak = f" · 连续第 {wb['streak']} 天" if wb.get("streak") else ""
         if wb.get("action") == "clicked":
             lines.append(f"▪️ WorkBuddy：**+{wb.get('got', 0)}**{streak}")
