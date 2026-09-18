@@ -42,8 +42,8 @@
 {
   "token": "<JWT, ~1000 字符>",           // 7 天有效
   "refreshToken": "<61 字符>",            // 约 6 个月有效，刷新时 rotate
-  "expiredAt": "2026-09-24T18:47:25.699Z",
-  "refreshExpiredAt": "2027-03-09T18:47:25.699Z",
+  "expiredAt": "<ISO 8601，签发后 7 天>",
+  "refreshExpiredAt": "<ISO 8601，签发后约 6 个月>",
   "host": "https://api.trae.cn",
   "userId": "<your-user-id>",
   "userRegion": { "region": "CN", "_aiRegion": "CN" },
@@ -65,9 +65,9 @@ Content-Type: application/json
 X-User-Region: CN
 x-device-id: <aha 数字设备 ID>        ← 不是 machineid UUID！
 x-app-version: 0.1.65                 ← 应用逻辑版本，不是外壳 1.107.1
-x-device-brand: <厂商，如 <厂商，如 Lenovo>>
+x-device-brand: <你的设备厂商>
 x-device-type: windows
-x-os-version: <如 <如 10.0.22631.0>>
+x-os-version: <如 10.0.22631.0>
 ```
 
 请求体：`{"req_source": 2}`（2 = SOLO/Lite 客户端）
@@ -113,7 +113,7 @@ POST /trae/api/v2/ug/checkin_credits/claim
 
 ### 3.1 aha 数字设备 ID
 
-- 格式：纯数字（15 位左右），例 `<your-device-id>（15 位左右纯数字）`
+- 格式：纯数字（15 位左右），例 `123456789012345`
 - 与 machineid（UUID 格式）**不同**，由 aha 设备服务（字节系）生成并注册
 - 获取方式（按优先级）：
   1. storage.json 中 `iCubeAuthInfo://icube-dc:` 前缀 key 的后缀
@@ -154,7 +154,7 @@ Content-Type: application/json
     "PlatformCode": "SOLO_PC",
     "DeviceType": "PC",
     "DeviceName": "<Windows 用户名>",
-    "DeviceModel": "<机型，如 <机型，如 Legion R9000P>>",
+    "DeviceModel": "<你的设备机型>",
     "ClientVersion": "0.1.65",
     "DevicePublicKey": "<EC P-256 公钥 PEM>",
     "DeviceBrand": "<厂商>",
