@@ -1,0 +1,8 @@
+# 敏感文件：导出的登录态/密钥对，永不提交
+trae_auth.json
+*.pem
+auth.json
+
+# 运行产物
+*.log
+node_modules/
